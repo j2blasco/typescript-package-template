@@ -1,4 +1,4 @@
-import type { Boundaries } from './boundaries.types';
+import type { Boundaries } from '@j2blasco/ts-boundaries';
 
 const boundaries: Boundaries = {
   name: 'root',

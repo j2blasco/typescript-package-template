@@ -34,16 +34,18 @@
     "LICENSE"
   ],
   "scripts": {
-    "boundaries:generate": "npm run script ./scripts/src/generate-eslint-boundaries.ts",
+    "boundaries": "ts-boundaries",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build": "npm run build:cjs && npm run build:esm",
-    "lint:fix": "npm run boundaries:generate && eslint src --ext .ts",
-    "lint": "npm run boundaries:generate && eslint src --ext .ts",
+    "lint:fix": "npm run boundaries && eslint src --ext .ts",
+    "lint": "npm run boundaries && eslint src --ext .ts",
+    "prepublishOnly": "npm run build",
     "script": "tsx --tsconfig ./scripts/tsconfig.json",
     "test": "jest"
   },
   "devDependencies": {
+    "@j2blasco/ts-boundaries": "^0.1.2",
     "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
