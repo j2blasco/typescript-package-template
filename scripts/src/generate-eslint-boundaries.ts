@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { pathToFileURL } from 'url';
 import { scritpsRootPath } from './scripts-root-path';
 
-interface BoundariesConfig {
-  name: string;
-  internal?: string[];
-  external?: string[];
-}
+// Import the Boundaries type from the source directory
+import type { Boundaries } from '../../src/boundaries.types';
+
+interface BoundariesConfig extends Boundaries {}
 
 interface BoundaryElement {
   type: string;
@@ -42,25 +42,23 @@ function scanForBoundariesFiles(
       if (entry.isDirectory()) {
         // Recursively scan subdirectories
         elements.push(...scanForBoundariesFiles(fullPath, srcRoot));
-      } else if (entry.name.endsWith('boundaries.json')) {
+      } else if (entry.name.endsWith('.boundaries.ts')) {
         try {
-          const configContent = fs.readFileSync(fullPath, 'utf8');
-          const config: BoundariesConfig = JSON.parse(configContent);
-
           const relativePath = path.relative(srcRoot, dir);
           const posixPath = relativePath.split(path.sep).join('/');
 
+          // We'll load the config later using dynamic import
+          const configName = entry.name.replace('.boundaries.ts', '');
+          
           elements.push({
-            type: config.name,
-            pattern: `src/${posixPath}`,
+            type: configName, // We'll update this with the actual name from the config
+            pattern: posixPath ? `src/${posixPath}` : 'src',
             folderPath: posixPath,
           });
 
-          console.log(
-            `Found boundaries file: ${fullPath} -> name: ${config.name}`
-          );
+          console.log(`Found boundaries file: ${fullPath}`);
         } catch (error) {
-          console.error(`Error parsing boundaries file at ${fullPath}:`, error);
+          console.error(`Error processing boundaries file at ${fullPath}:`, error);
         }
       }
     }
@@ -71,10 +69,10 @@ function scanForBoundariesFiles(
   return elements;
 }
 
-function loadBoundariesConfigs(srcRoot: string): Map<string, BoundariesConfig> {
+async function loadBoundariesConfigs(srcRoot: string): Promise<Map<string, BoundariesConfig>> {
   const configs = new Map<string, BoundariesConfig>();
 
-  function scanDirectory(dir: string) {
+  async function scanDirectory(dir: string) {
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -82,15 +80,24 @@ function loadBoundariesConfigs(srcRoot: string): Map<string, BoundariesConfig> {
         const fullPath = path.join(dir, entry.name);
 
         if (entry.isDirectory()) {
-          scanDirectory(fullPath);
-        } else if (entry.name.endsWith('boundaries.json')) {
+          await scanDirectory(fullPath);
+        } else if (entry.name.endsWith('.boundaries.ts')) {
           try {
-            const configContent = fs.readFileSync(fullPath, 'utf8');
-            const config: BoundariesConfig = JSON.parse(configContent);
+            // Convert file path to file URL for dynamic import
+            const fileUrl = pathToFileURL(fullPath).href;
+            const module = await import(fileUrl);
+            const config: BoundariesConfig = module.default || module.boundaries;
+            
+            if (!config || !config.name) {
+              console.error(`Invalid boundaries config in ${fullPath}: missing name or default export`);
+              continue;
+            }
+            
             configs.set(config.name, config);
+            console.log(`Loaded boundaries config: ${config.name} from ${fullPath}`);
           } catch (error) {
             console.error(
-              `Error parsing boundaries.json at ${fullPath}:`,
+              `Error loading boundaries.ts at ${fullPath}:`,
               error
             );
           }
@@ -101,11 +108,11 @@ function loadBoundariesConfigs(srcRoot: string): Map<string, BoundariesConfig> {
     }
   }
 
-  scanDirectory(srcRoot);
+  await scanDirectory(srcRoot);
   return configs;
 }
 
-function generateESLintConfig(): string {
+async function generateESLintConfig(): Promise<string> {
   const srcPath = path.join(projectRootPath, 'src');
 
   if (!fs.existsSync(srcPath)) {
@@ -124,11 +131,24 @@ function generateESLintConfig(): string {
 
   if (elements.length === 0) {
     console.log(
-      'No boundaries.json files found. Generating empty configuration.'
+      'No .boundaries.ts files found. Generating empty configuration.'
     );
   }
 
-  const boundariesConfigs = loadBoundariesConfigs(srcPath);
+  const boundariesConfigs = await loadBoundariesConfigs(srcPath);
+
+  // Update element types with actual names from configs
+  for (const element of elements) {
+    for (const [name, config] of boundariesConfigs) {
+      if (element.folderPath === '' && name === 'root') {
+        element.type = name;
+        break;
+      } else if (element.folderPath && config.name === element.type) {
+        element.type = name;
+        break;
+      }
+    }
+  }
 
   const rules: InternalRule[] = [];
   const externalRules: ExternalRule[] = [];
@@ -220,11 +240,11 @@ export default [
   return eslintConfig;
 }
 
-function main() {
+async function main() {
   console.log('Generating ESLint boundaries configuration...');
 
   try {
-    const config = generateESLintConfig();
+    const config = await generateESLintConfig();
     const outputPath = path.join(
       projectRootPath,
       'eslint.boundaries.generated.mjs'

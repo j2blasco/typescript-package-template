@@ -14,5 +14,5 @@
     "target": "ES2022"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.test.ts", "dist", "types"]
+  "exclude": ["**/*.test.ts", "**/*.boundaries.ts", "src/boundaries.types.ts", "dist", "types"]
 }

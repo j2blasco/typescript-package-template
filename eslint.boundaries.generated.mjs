@@ -10,7 +10,7 @@ export default [
     },
     settings: {
       'boundaries/elements': [
-        { type: 'root', pattern: 'src/' }
+        { type: 'root', pattern: 'src' }
       ] 
     },
     rules: {
