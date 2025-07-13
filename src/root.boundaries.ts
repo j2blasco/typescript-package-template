@@ -3,7 +3,7 @@ import type { Boundaries } from './boundaries.types';
 const boundaries: Boundaries = {
   name: 'root',
   internal: [],
-  external: []
+  external: [],
 };
 
 export default boundaries;
