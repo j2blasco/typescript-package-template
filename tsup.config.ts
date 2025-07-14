@@ -3,12 +3,10 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
+  clean: true,
   dts: true,
   sourcemap: true,
-  clean: true,
   outDir: 'dist',
   tsconfig: 'tsconfig.json',
-  bundle: true,
-  treeshake: true,
-  external: [],
+  target: 'es2020',
 });
