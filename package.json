@@ -4,7 +4,6 @@
   "description": "Typescript Package Template",
   "author": "j2blasco",
   "license": "MIT",
-  "type": "module",
   "keywords": [
     "typescript",
     "package",
