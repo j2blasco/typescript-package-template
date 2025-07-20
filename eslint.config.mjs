@@ -1,6 +1,5 @@
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
-import importPlugin from "eslint-plugin-import";
 import generatedBoundaries from "./eslint.boundaries.generated.mjs";
 import prettier from "eslint-plugin-prettier";
 
@@ -21,7 +20,6 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
-      import: importPlugin,
       prettier,
     },
     settings: {
@@ -33,7 +31,6 @@ export default [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
-      ...importPlugin.configs.recommended.rules,
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
