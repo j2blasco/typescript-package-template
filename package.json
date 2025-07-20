@@ -29,12 +29,14 @@
   "files": [
     "dist",
     "types",
+    "src/**/*.ts",
+    "!src/**/*.test.ts",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "boundaries": "ts-boundaries",
-    "build": "npm run clean && tsup --dts",
+    "build": "npm run clean && tsup",
     "clean": "shx rm -rf dist types",
     "lint:fix": "npm run boundaries && eslint src --ext .ts",
     "lint": "npm run boundaries && eslint src --ext .ts",
